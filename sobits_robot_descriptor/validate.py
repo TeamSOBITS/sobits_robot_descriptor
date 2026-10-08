@@ -52,7 +52,8 @@ _ENTRY_KEYS = {
               'uncommanded_joints', 'command_topic', 'command_action',
               'state_topic'},
     'base controller': {'name', 'controller', 'interface', 'kind', 'joints',
-                        'command_topic', 'wheel_radius', 'wheel_separation'},
+                        'command_topic', 'wheel_radius', 'wheel_separation',
+                        'left_joints', 'right_joints'},
     'camera': {'name', 'frame', 'model', 'color', 'depth', 'requires'},
     'lidar': {'name', 'frame', 'scan_topic', 'points_topic', 'merged_from',
               'requires'},
@@ -169,6 +170,15 @@ class _Checker:
         if required and not value:
             self.err(f'{where}: joints must not be empty')
         return list(value)
+
+    def side_list(self, entry: Mapping[str, Any], key: str, where: str) -> list[str]:
+        if entry.get(key) is None:
+            self.err(f'{where}: missing required key {key!r}')
+            return []
+        js = self.joints_list(entry[key], f'{where} {key}', False)
+        if not js and isinstance(entry[key], list):
+            self.err(f'{where}: {key} must not be empty')
+        return js
 
     def positive(self, entry: Mapping[str, Any], key: str, where: str,
                  required: bool) -> None:
@@ -288,11 +298,19 @@ class _Checker:
                     dd = c.get('interface') == 'diff_drive'
                     for k in ('wheel_radius', 'wheel_separation'):
                         self.positive(c, k, w, required=dd)
+                    if not dd and (c.get('left_joints') or c.get('right_joints')):
+                        self.err(f'{w}: left_joints/right_joints are only valid '
+                                 'for interface diff_drive')
                     if dd:
                         diff_joints.extend(js)
-                        if len(js) != 2:
-                            self.err(f'{w}: diff_drive needs exactly 2 joints '
-                                     f'[left, right], got {len(js)}')
+                        left, right = (self.side_list(c, k, w)
+                                       for k in ('left_joints', 'right_joints'))
+                        if set(left) & set(right):
+                            self.err(f'{w}: left_joints and right_joints overlap: '
+                                     f'{sorted(set(left) & set(right))}')
+                        if (left or right) and set(left) | set(right) != set(js):
+                            self.err(f'{w}: left_joints + right_joints must equal '
+                                     f'joints {js}')
                         if c.get('kind') != 'velocity':
                             self.err(f'{w}: diff_drive needs kind: velocity')
                         if not mb.get('command_topic'):

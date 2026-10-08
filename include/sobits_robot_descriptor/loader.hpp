@@ -126,6 +126,8 @@ struct BaseControllerSpec
   std::string command_topic;
   double wheel_radius = 0.0;  // m; 0 when absent (diff_drive requires it)
   double wheel_separation = 0.0;
+  std::vector<std::string> left_joints;  // diff_drive sides; union == joints
+  std::vector<std::string> right_joints;
 };
 
 struct MobileBaseSpec
@@ -477,6 +479,8 @@ inline RobotDescriptor load_file(
             s.controller + (s.interface == "group" ? "/commands" : "/joint_trajectory"));
         s.wheel_radius = num(c, "wheel_radius");
         s.wheel_separation = num(c, "wheel_separation");
+        s.left_joints = strs(c, "left_joints");
+        s.right_joints = strs(c, "right_joints");
         m.controllers.push_back(std::move(s));
       }
       r.mobile_base = std::move(m);

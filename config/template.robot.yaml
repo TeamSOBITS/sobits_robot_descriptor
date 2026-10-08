@@ -46,12 +46,14 @@ mobile_base:
       kind: velocity
       joints: [<wheel_joint_1>, <wheel_joint_2>]
     # Differential drive (diff_drive_controller): command_topic defaults to
-    # mobile_base.command_topic; joints are exactly [left, right].
+    # mobile_base.command_topic; left_joints + right_joints split joints by side.
     # - name: <base_controller_name>
     #   controller: <diff_drive_controller>
     #   interface: diff_drive
     #   kind: velocity
     #   joints: [<left_wheel_joint>, <right_wheel_joint>]
+    #   left_joints: [<left_wheel_joint>]
+    #   right_joints: [<right_wheel_joint>]
     #   wheel_radius: <wheel_radius_m>
     #   wheel_separation: <wheel_separation_m>
 

@@ -180,7 +180,13 @@ def test_diff_drive_valid(diffbot):
 
 @pytest.mark.parametrize('fn,msg', [
     (lambda c: c['joints'].append('wheel_caster_joint'),
-     'diff_drive needs exactly 2 joints'),
+     'left_joints + right_joints must equal joints'),
+    (lambda c: c.pop('left_joints'), "missing required key 'left_joints'"),
+    (lambda c: c.update(right_joints=[]), 'right_joints must not be empty'),
+    (lambda c: c.update(right_joints=['wheel_left_joint']),
+     "left_joints and right_joints overlap: ['wheel_left_joint']"),
+    (lambda c: c.update(right_joints=['wheel_rear_joint']),
+     'left_joints + right_joints must equal joints'),
     (lambda c: c.update(kind='position'), 'diff_drive needs kind: velocity'),
     (lambda c: c.pop('kind'), 'diff_drive needs kind: velocity'),
     (lambda c: c.pop('wheel_radius'), "missing required key 'wheel_radius'"),
@@ -202,6 +208,10 @@ def test_diff_drive_context_rules(diffbot):
     errs = mutated(diffbot, lambda d: d.update(excluded_joints=['wheel_left_joint']))
     assert errs == ["excluded_joints: 'wheel_left_joint' is a diff_drive wheel joint "
                     "of base controller 'wheels' (excluded automatically)"]
+    errs = mutated(diffbot, lambda d: d['mobile_base']['controllers'][0].update(
+        interface='group', kind='velocity', wheel_radius=None, wheel_separation=None))
+    assert errs == ["base controller 'wheels': left_joints/right_joints are only "
+                    'valid for interface diff_drive']
     assert any('wheel_radius must be a positive' in e for e in mutated(
         diffbot, lambda d: d['mobile_base']['controllers'][0].update(
             interface='group', wheel_radius=-1)))

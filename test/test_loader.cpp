@@ -80,9 +80,12 @@ TEST(Loader, DiffDrive)
   EXPECT_EQ(c.joints, (std::vector<std::string>{"wheel_left_joint", "wheel_right_joint"}));
   EXPECT_DOUBLE_EQ(c.wheel_radius, 0.05);
   EXPECT_DOUBLE_EQ(c.wheel_separation, 0.3);
+  EXPECT_EQ(c.left_joints, (std::vector<std::string>{"wheel_left_joint"}));
+  EXPECT_EQ(c.right_joints, (std::vector<std::string>{"wheel_right_joint"}));
   EXPECT_EQ(d.all_excluded_joints().size(), 2u);
   const auto h = srd::load_file(SOBIT_HOME);
   EXPECT_DOUBLE_EQ(h.mobile_base->controllers.at(0).wheel_radius, 0.0);
+  EXPECT_TRUE(h.mobile_base->controllers.at(0).left_joints.empty());
 }
 
 TEST(Loader, TopicAndFramePrefix)

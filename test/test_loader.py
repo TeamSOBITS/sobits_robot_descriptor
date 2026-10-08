@@ -251,6 +251,7 @@ def test_diff_drive(tmp_path):
         'diff_drive', 'velocity', ['wheel_left_joint', 'wheel_right_joint'])
     assert c.command_topic == 'cmd_vel' and d.topic(c.command_topic) == '/diffbot/cmd_vel'
     assert (c.wheel_radius, c.wheel_separation) == (0.05, 0.3)
+    assert (c.left_joints, c.right_joints) == (['wheel_left_joint'], ['wheel_right_joint'])
     assert d.all_excluded_joints == ['wheel_left_joint', 'wheel_right_joint']
     assert d.controllers()[-1] is c
     out = d.to_dict()['mobile_base']['controllers'][0]
@@ -265,4 +266,5 @@ def test_diff_drive(tmp_path):
 def test_base_controller_wheel_fields_default(desc):
     steer = desc.mobile_base.controllers[0]
     assert steer.wheel_radius is None and steer.wheel_separation is None
+    assert steer.left_joints == [] and steer.right_joints == []
     assert desc.to_dict()['mobile_base']['controllers'][0]['wheel_radius'] is None

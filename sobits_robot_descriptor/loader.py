@@ -190,7 +190,9 @@ def _base_controller(c: Mapping[str, Any], base_cmd: str) -> BaseControllerSpec:
         name=c['name'], controller=c['controller'], joints=list(c['joints']),
         interface=interface, kind=c.get('kind', 'position'),
         command_topic=topic, wheel_radius=_opt_float(c.get('wheel_radius')),
-        wheel_separation=_opt_float(c.get('wheel_separation')))
+        wheel_separation=_opt_float(c.get('wheel_separation')),
+        left_joints=list(c.get('left_joints') or []),
+        right_joints=list(c.get('right_joints') or []))
 
 
 def parse(data: Mapping[str, Any], prefix: str | None = None,

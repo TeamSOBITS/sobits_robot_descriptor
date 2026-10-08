@@ -29,7 +29,7 @@
 | `odom_frame` | frame | デフォルト `odom` |
 | `joint_states_topic` | topic | 必須 |
 | `groups[]` | `{name, controller, interface?, kind?, joints, uncommanded_joints?, command_topic?, command_action?, state_topic?}` | `interface`: `trajectory` (デフォルト) \| `group`；`kind`: `position` (デフォルト) \| `velocity`；`uncommanded_joints`: 模倣ジョイント（公開されるが命令されない） |
-| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | オプショナル；`controllers[] {name, controller, interface? (デフォルト group), kind?, joints, command_topic?, wheel_radius?, wheel_separation?}` はホイール関連ジョイント；ここでのみ `interface: diff_drive` も可（下記参照） |
+| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | オプショナル；`controllers[] {name, controller, interface? (デフォルト group), kind?, joints, command_topic?, wheel_radius?, wheel_separation?, left_joints?, right_joints?}` はホイール関連ジョイント；ここでのみ `interface: diff_drive` も可（下記参照） |
 | `sensors.cameras[]` | `{name, frame, model?, color?, depth?, requires?}` | `frame` = マウントリンク；少なくとも1つのストリーム |
 | stream (`color`/`depth`) | `{frame, raw_topic, compressed_topic?, info_topic, encoding?, width?, height?, fps?, points_topic?, range_m?}` | `frame` = 光学フレーム；`range_m: [min, max]` |
 | `sensors.lidars[]` | `{name, frame, scan_topic, points_topic?, merged_from?, requires?}` | `merged_from` は他の LiDAR を指定 |
@@ -46,8 +46,10 @@
 | `group` | `<controller>/commands` | なし | なし |
 | `diff_drive`（ベースのみ） | `mobile_base.command_topic`（cmd_vel twist） | なし | なし |
 
-`diff_drive` のベースコントローラーは `kind: velocity`、`joints: [left, right]`（ちょうど2つ）、
-`wheel_radius` と `wheel_separation`（m、> 0）、および `mobile_base.command_topic` が必要です。
+`diff_drive` のベースコントローラーは `kind: velocity`、`left_joints` と `right_joints`
+（空でなく、互いに重ならず、合わせてちょうど `joints`）、`wheel_radius` と `wheel_separation`
+（m、> 0）、および `mobile_base.command_topic` が必要です。`left_joints`/`right_joints` は
+`diff_drive` でのみ有効です。
 そのジョイントは `excluded_joints` に記載しないこと（自動的に除外されます）。
 
 `groups[].joints` 内のジョイント順序はデータセット機能順です。並べ替えないこと。

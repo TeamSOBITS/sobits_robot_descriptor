@@ -29,7 +29,7 @@ optional frame prefix (`frame()`).
 | `odom_frame` | frame | default `odom` |
 | `joint_states_topic` | topic | required |
 | `groups[]` | `{name, controller, interface?, kind?, joints, uncommanded_joints?, command_topic?, command_action?, state_topic?}` | `interface`: `trajectory` (default) \| `group`; `kind`: `position` (default) \| `velocity`; `uncommanded_joints`: mimic joints published but never commanded |
-| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | optional; `controllers[] {name, controller, interface? (default group), kind?, joints, command_topic?, wheel_radius?, wheel_separation?}` hold the wheel joints; `interface` also accepts `diff_drive` here (see below) |
+| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | optional; `controllers[] {name, controller, interface? (default group), kind?, joints, command_topic?, wheel_radius?, wheel_separation?, left_joints?, right_joints?}` hold the wheel joints; `interface` also accepts `diff_drive` here (see below) |
 | `sensors.cameras[]` | `{name, frame, model?, color?, depth?, requires?}` | `frame` = mount link; at least one stream |
 | stream (`color`/`depth`) | `{frame, raw_topic, compressed_topic?, info_topic, encoding?, width?, height?, fps?, points_topic?, range_m?}` | `frame` = optical frame; `range_m: [min, max]` |
 | `sensors.lidars[]` | `{name, frame, scan_topic, points_topic?, merged_from?, requires?}` | `merged_from` names other lidars |
@@ -46,8 +46,10 @@ Derived topics when not given:
 | `group` | `<controller>/commands` | none | none |
 | `diff_drive` (base only) | `mobile_base.command_topic` (cmd_vel twist) | none | none |
 
-`diff_drive` base controllers need `kind: velocity`, `joints: [left, right]` (exactly
-two), `wheel_radius` and `wheel_separation` (m, > 0) and `mobile_base.command_topic`.
+`diff_drive` base controllers need `kind: velocity`, `left_joints` and `right_joints`
+(non-empty, disjoint, together exactly `joints`), `wheel_radius` and `wheel_separation`
+(m, > 0) and `mobile_base.command_topic`. `left_joints`/`right_joints` are only valid
+for `diff_drive`.
 Their joints must not be listed in `excluded_joints` (they are excluded automatically).
 
 Joint order in `groups[].joints` is the dataset feature order; do not reorder.

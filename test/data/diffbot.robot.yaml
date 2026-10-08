@@ -21,5 +21,7 @@ mobile_base:
       interface: diff_drive
       kind: velocity
       joints: [wheel_left_joint, wheel_right_joint]
+      left_joints: [wheel_left_joint]
+      right_joints: [wheel_right_joint]
       wheel_radius: 0.05
       wheel_separation: 0.3

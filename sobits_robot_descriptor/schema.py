@@ -127,6 +127,8 @@ class BaseControllerSpec:
     command_topic: str | None = None
     wheel_radius: float | None = None       # m (diff_drive)
     wheel_separation: float | None = None   # m (diff_drive)
+    left_joints: list[str] = field(default_factory=list)    # diff_drive sides,
+    right_joints: list[str] = field(default_factory=list)   # union == joints
 
 
 @dataclass
