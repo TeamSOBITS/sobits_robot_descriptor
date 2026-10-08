@@ -1,0 +1,19 @@
+# Lets a plain venv (e.g. Isaac Lab) `uv pip install -e .` without ROS.
+# colcon ignores this file: package.xml selects ament_cmake.
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sobits_robot_descriptor"
+version = "0.1.0"
+description = "Shared robot descriptor (schema v2) loader and validator"
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.10"
+dependencies = ["pyyaml"]
+
+[project.scripts]
+sobits-robot-descriptor-validate = "sobits_robot_descriptor.validate:main"
+
+[tool.setuptools]
+packages = ["sobits_robot_descriptor"]
