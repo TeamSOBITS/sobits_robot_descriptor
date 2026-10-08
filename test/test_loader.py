@@ -242,3 +242,27 @@ def test_load_rejects_invalid(tmp_path):
     p.write_text('- not a mapping\n')
     with pytest.raises(DescriptorError, match='not a YAML mapping'):
         load_file(p)
+
+
+def test_diff_drive(tmp_path):
+    d = load_file(DATA / 'diffbot.robot.yaml')
+    c = d.mobile_base.controllers[0]
+    assert (c.interface, c.kind, c.joints) == (
+        'diff_drive', 'velocity', ['wheel_left_joint', 'wheel_right_joint'])
+    assert c.command_topic == 'cmd_vel' and d.topic(c.command_topic) == '/diffbot/cmd_vel'
+    assert (c.wheel_radius, c.wheel_separation) == (0.05, 0.3)
+    assert d.all_excluded_joints == ['wheel_left_joint', 'wheel_right_joint']
+    assert d.controllers()[-1] is c
+    out = d.to_dict()['mobile_base']['controllers'][0]
+    assert out['command_topic'] == '/diffbot/cmd_vel'
+    assert (out['wheel_radius'], out['wheel_separation']) == (0.05, 0.3)
+    data = yaml.safe_load((DATA / 'diffbot.robot.yaml').read_text())
+    data['mobile_base']['controllers'][0]['command_topic'] = 'diff_drive_controller/cmd_vel'
+    assert parse(data).mobile_base.controllers[0].command_topic == \
+        'diff_drive_controller/cmd_vel'
+
+
+def test_base_controller_wheel_fields_default(desc):
+    steer = desc.mobile_base.controllers[0]
+    assert steer.wheel_radius is None and steer.wheel_separation is None
+    assert desc.to_dict()['mobile_base']['controllers'][0]['wheel_radius'] is None

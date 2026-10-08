@@ -29,14 +29,14 @@
 
 from .loader import ENV_PATH, load, load_file, parse, read_yaml, resolve_path
 from .schema import (
-    INTERFACES, KINDS, SCHEMA_VERSION, BaseControllerSpec, CameraSpec,
+    BASE_INTERFACES, INTERFACES, KINDS, SCHEMA_VERSION, BaseControllerSpec, CameraSpec,
     DescriptorError, EEControlSpec, EESpec, GroupSpec, ImuSpec, LidarSpec,
     MobileBaseSpec, RobotDescriptor, StreamSpec, UrdfSpec, derived_topics,
 )
 from .validate import check, validate
 
 __all__ = [
-    'ENV_PATH', 'INTERFACES', 'KINDS', 'SCHEMA_VERSION',
+    'BASE_INTERFACES', 'ENV_PATH', 'INTERFACES', 'KINDS', 'SCHEMA_VERSION',
     'BaseControllerSpec', 'CameraSpec', 'DescriptorError', 'EEControlSpec',
     'EESpec', 'GroupSpec', 'ImuSpec', 'LidarSpec', 'MobileBaseSpec',
     'RobotDescriptor', 'StreamSpec', 'UrdfSpec',

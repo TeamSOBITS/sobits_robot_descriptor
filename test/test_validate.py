@@ -167,3 +167,41 @@ def test_new_robot_cli(tmp_path):
     assert '<base_link>' in r.stdout and 'test_robot_descriptor.py' in r.stdout
     assert run_cli('scripts/new_robot', '--robot-id', 'my_robot', '-o',
                    str(out)).returncode == 1
+
+
+@pytest.fixture(scope='module')
+def diffbot():
+    return yaml.safe_load((DATA / 'diffbot.robot.yaml').read_text())
+
+
+def test_diff_drive_valid(diffbot):
+    assert check(diffbot) == ([], [])
+
+
+@pytest.mark.parametrize('fn,msg', [
+    (lambda c: c['joints'].append('wheel_caster_joint'),
+     'diff_drive needs exactly 2 joints'),
+    (lambda c: c.update(kind='position'), 'diff_drive needs kind: velocity'),
+    (lambda c: c.pop('kind'), 'diff_drive needs kind: velocity'),
+    (lambda c: c.pop('wheel_radius'), "missing required key 'wheel_radius'"),
+    (lambda c: c.update(wheel_separation=0), 'wheel_separation must be a positive'),
+    (lambda c: c.update(wheel_radius='5cm'), 'wheel_radius must be a positive'),
+    (lambda c: c.update(interface='diffdrive'), 'interface must be one of'),
+])
+def test_diff_drive_rules(diffbot, fn, msg):
+    errs = mutated(diffbot, lambda d: fn(d['mobile_base']['controllers'][0]))
+    assert any(msg in e for e in errs), errs
+
+
+def test_diff_drive_context_rules(diffbot):
+    errs = mutated(diffbot, lambda d: d['mobile_base'].pop('command_topic'))
+    assert any('diff_drive needs mobile_base.command_topic' in e for e in errs)
+    errs = mutated(diffbot, lambda d: d['groups'][0].update(interface='diff_drive'))
+    assert errs == ["group 'head': interface diff_drive is only valid under "
+                    'mobile_base.controllers']
+    errs = mutated(diffbot, lambda d: d.update(excluded_joints=['wheel_left_joint']))
+    assert errs == ["excluded_joints: 'wheel_left_joint' is a diff_drive wheel joint "
+                    "of base controller 'wheels' (excluded automatically)"]
+    assert any('wheel_radius must be a positive' in e for e in mutated(
+        diffbot, lambda d: d['mobile_base']['controllers'][0].update(
+            interface='group', wheel_radius=-1)))

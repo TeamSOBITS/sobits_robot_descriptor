@@ -34,6 +34,8 @@ from typing import Any
 
 SCHEMA_VERSION = 2
 INTERFACES = ('trajectory', 'group')
+# diff_drive is valid only for mobile_base.controllers.
+BASE_INTERFACES = (*INTERFACES, 'diff_drive')
 KINDS = ('position', 'velocity')
 
 
@@ -123,6 +125,8 @@ class BaseControllerSpec:
     interface: str = 'group'
     kind: str = 'position'
     command_topic: str | None = None
+    wheel_radius: float | None = None       # m (diff_drive)
+    wheel_separation: float | None = None   # m (diff_drive)
 
 
 @dataclass

@@ -36,7 +36,7 @@ import sys
 from collections.abc import Mapping
 from typing import Any
 
-from .schema import INTERFACES, KINDS, SCHEMA_VERSION, DescriptorError
+from .schema import BASE_INTERFACES, INTERFACES, KINDS, SCHEMA_VERSION, DescriptorError
 
 PLACEHOLDER = re.compile(r'<[^<>\s][^<>]*>')
 _ROBOT_ID = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
@@ -52,7 +52,7 @@ _ENTRY_KEYS = {
               'uncommanded_joints', 'command_topic', 'command_action',
               'state_topic'},
     'base controller': {'name', 'controller', 'interface', 'kind', 'joints',
-                        'command_topic'},
+                        'command_topic', 'wheel_radius', 'wheel_separation'},
     'camera': {'name', 'frame', 'model', 'color', 'depth', 'requires'},
     'lidar': {'name', 'frame', 'scan_topic', 'points_topic', 'merged_from',
               'requires'},
@@ -170,6 +170,15 @@ class _Checker:
             self.err(f'{where}: joints must not be empty')
         return list(value)
 
+    def positive(self, entry: Mapping[str, Any], key: str, where: str,
+                 required: bool) -> None:
+        v = entry.get(key)
+        if v is None:
+            if required:
+                self.err(f'{where}: missing required key {key!r}')
+        elif isinstance(v, bool) or not isinstance(v, (int, float)) or v <= 0:
+            self.err(f'{where}: {key} must be a positive number (m), got {v!r}')
+
     def stream(self, s: Any, where: str) -> None:
         if not isinstance(s, Mapping):
             self.err(f'{where}: must be a mapping')
@@ -244,7 +253,11 @@ class _Checker:
         for g in groups:
             w = f'group {g["name"]!r}'
             self.str_key(g, 'controller', w)
-            self.enum(g, 'interface', INTERFACES, w)
+            if g.get('interface') == 'diff_drive':
+                self.err(f'{w}: interface diff_drive is only valid under '
+                         'mobile_base.controllers')
+            else:
+                self.enum(g, 'interface', INTERFACES, w)
             self.enum(g, 'kind', KINDS, w)
             claim(self.joints_list(g.get('joints'), w, True), w)
             claim(self.joints_list(g.get('uncommanded_joints'),
@@ -256,6 +269,7 @@ class _Checker:
         ctrl_names = list(group_names)
         mb = d.get('mobile_base')
         base_joints: list[str] = []
+        diff_joints: list[str] = []
         if mb is not None:
             if not isinstance(mb, Mapping):
                 self.err('mobile_base must be a mapping')
@@ -266,11 +280,24 @@ class _Checker:
                                       'mobile_base.controllers'):
                     w = f'base controller {c["name"]!r}'
                     self.str_key(c, 'controller', w)
-                    self.enum(c, 'interface', INTERFACES, w)
+                    self.enum(c, 'interface', BASE_INTERFACES, w)
                     self.enum(c, 'kind', KINDS, w)
                     js = self.joints_list(c.get('joints'), w, True)
                     claim(js, w)
                     base_joints.extend(js)
+                    dd = c.get('interface') == 'diff_drive'
+                    for k in ('wheel_radius', 'wheel_separation'):
+                        self.positive(c, k, w, required=dd)
+                    if dd:
+                        diff_joints.extend(js)
+                        if len(js) != 2:
+                            self.err(f'{w}: diff_drive needs exactly 2 joints '
+                                     f'[left, right], got {len(js)}')
+                        if c.get('kind') != 'velocity':
+                            self.err(f'{w}: diff_drive needs kind: velocity')
+                        if not mb.get('command_topic'):
+                            self.err(f'{w}: diff_drive needs '
+                                     'mobile_base.command_topic (the cmd_vel twist)')
                     self.topic(f'{w}.command_topic', c.get('command_topic'),
                                required=False)
                     ctrl_names.append(c['name'])
@@ -341,7 +368,10 @@ class _Checker:
 
         excl = self.joints_list(d.get('excluded_joints'), 'excluded_joints', False)
         for j in excl:
-            if j in base_joints:
+            if j in diff_joints:
+                self.err(f'excluded_joints: {j!r} is a diff_drive wheel joint '
+                         f'of {owner[j]} (excluded automatically)')
+            elif j in base_joints:
                 self.warn(f'excluded_joints: {j!r} is a mobile base joint '
                           '(already excluded automatically)')
             elif j in owner:

@@ -1,0 +1,25 @@
+# Differential-drive base: diff_drive controller on the cmd_vel twist.
+schema_version: 2
+robot_id: diffbot
+namespace: diffbot
+urdf:
+  xacro: urdf/diffbot.urdf.xacro
+base_frame: base_footprint
+joint_states_topic: joint_states
+groups:
+  - name: head
+    controller: head_controller
+    joints: [head_pan_joint]
+mobile_base:
+  command_topic: cmd_vel
+  odom_topic: odom
+  has_vel_x: true
+  has_vel_theta: true
+  controllers:
+    - name: wheels
+      controller: diff_drive_controller
+      interface: diff_drive
+      kind: velocity
+      joints: [wheel_left_joint, wheel_right_joint]
+      wheel_radius: 0.05
+      wheel_separation: 0.3

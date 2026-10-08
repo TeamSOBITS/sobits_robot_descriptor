@@ -29,7 +29,7 @@
 | `odom_frame` | frame | デフォルト `odom` |
 | `joint_states_topic` | topic | 必須 |
 | `groups[]` | `{name, controller, interface?, kind?, joints, uncommanded_joints?, command_topic?, command_action?, state_topic?}` | `interface`: `trajectory` (デフォルト) \| `group`；`kind`: `position` (デフォルト) \| `velocity`；`uncommanded_joints`: 模倣ジョイント（公開されるが命令されない） |
-| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | オプショナル；`controllers[] {name, controller, interface? (デフォルト group), kind?, joints, command_topic?}` はホイール関連ジョイント |
+| `mobile_base` | `{command_topic, odom_topic, has_vel_x/y/z/theta, controllers[]}` | オプショナル；`controllers[] {name, controller, interface? (デフォルト group), kind?, joints, command_topic?, wheel_radius?, wheel_separation?}` はホイール関連ジョイント；ここでのみ `interface: diff_drive` も可（下記参照） |
 | `sensors.cameras[]` | `{name, frame, model?, color?, depth?, requires?}` | `frame` = マウントリンク；少なくとも1つのストリーム |
 | stream (`color`/`depth`) | `{frame, raw_topic, compressed_topic?, info_topic, encoding?, width?, height?, fps?, points_topic?, range_m?}` | `frame` = 光学フレーム；`range_m: [min, max]` |
 | `sensors.lidars[]` | `{name, frame, scan_topic, points_topic?, merged_from?, requires?}` | `merged_from` は他の LiDAR を指定 |
@@ -44,6 +44,11 @@
 |---|---|---|---|
 | `trajectory` | `<controller>/joint_trajectory` | `<controller>/follow_joint_trajectory` | `<controller>/controller_state` |
 | `group` | `<controller>/commands` | なし | なし |
+| `diff_drive`（ベースのみ） | `mobile_base.command_topic`（cmd_vel twist） | なし | なし |
+
+`diff_drive` のベースコントローラーは `kind: velocity`、`joints: [left, right]`（ちょうど2つ）、
+`wheel_radius` と `wheel_separation`（m、> 0）、および `mobile_base.command_topic` が必要です。
+そのジョイントは `excluded_joints` に記載しないこと（自動的に除外されます）。
 
 `groups[].joints` 内のジョイント順序はデータセット機能順です。並べ替えないこと。
 パッケージ固有の設定（VLA `feature`/limits/`active`、ビューアレイアウト、Isaac センサー
@@ -131,9 +136,9 @@ ros2 run sobits_robot_descriptor new_robot --robot-id my_robot [--namespace NS] 
 `validate` は有効な場合は 0 で終了、エラーで 1（または `--strict` ありの警告）、
 ファイルが見つからないまたは読み込めない場合は 2 で終了します。ルール：schema v2、必須キー、
 一意の名前、グループ/ベースコントローラー/非命令リストで最大1つのジョイント、`interface`/`kind`
-値、相対トピック、全カメラはストリームを持ち全ストリームはフレームとトピックを持つ、
+値（`diff_drive` は `mobile_base.controllers` のみ、上記ルール付き）、相対トピック、全カメラはストリームを持ち全ストリームはフレームとトピックを持つ、
 `ee.control.group` および `merged_from` が解決、`requires` キーが `urdf.args` に存在
-（警告）、プレースホルダー `<...>` が残らない。
+（警告）、`excluded_joints` がグループや `diff_drive` コントローラーに含まれない、プレースホルダー `<...>` が残らない。
 
 `new_robot` はテンプレートから `robot_id`/`namespace`/`description_package` を埋め、
 残りのプレースホルダーおよび CMake インストール行を出力します。ROS 外でも同じ

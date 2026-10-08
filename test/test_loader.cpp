@@ -68,6 +68,23 @@ TEST(Loader, DerivedTopics)
     "wheel_drive_velocity_controller/commands");
 }
 
+TEST(Loader, DiffDrive)
+{
+  const auto d = srd::load_file(DATA + "/diffbot.robot.yaml");
+  ASSERT_TRUE(d.mobile_base);
+  const auto & c = d.mobile_base->controllers.at(0);
+  EXPECT_EQ(c.interface, "diff_drive");
+  EXPECT_EQ(c.kind, "velocity");
+  EXPECT_EQ(c.command_topic, "cmd_vel");
+  EXPECT_EQ(d.topic(c.command_topic), "/diffbot/cmd_vel");
+  EXPECT_EQ(c.joints, (std::vector<std::string>{"wheel_left_joint", "wheel_right_joint"}));
+  EXPECT_DOUBLE_EQ(c.wheel_radius, 0.05);
+  EXPECT_DOUBLE_EQ(c.wheel_separation, 0.3);
+  EXPECT_EQ(d.all_excluded_joints().size(), 2u);
+  const auto h = srd::load_file(SOBIT_HOME);
+  EXPECT_DOUBLE_EQ(h.mobile_base->controllers.at(0).wheel_radius, 0.0);
+}
+
 TEST(Loader, TopicAndFramePrefix)
 {
   const auto d = srd::load_file(SOBIT_HOME, "sobit_home/");

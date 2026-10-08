@@ -176,14 +176,21 @@ def _group(g: Mapping[str, Any]) -> GroupSpec:
         uncommanded_joints=list(g.get('uncommanded_joints') or []), **topics)
 
 
-def _base_controller(c: Mapping[str, Any]) -> BaseControllerSpec:
+def _opt_float(value: Any) -> float | None:
+    return None if value is None else float(value)
+
+
+def _base_controller(c: Mapping[str, Any], base_cmd: str) -> BaseControllerSpec:
     interface = c.get('interface', 'group')
-    topic = c.get('command_topic') or derived_topics(
-        c['controller'], interface)['command_topic']
+    # diff_drive consumes the base twist, so it defaults to mobile_base.command_topic.
+    topic = c.get('command_topic') or (
+        base_cmd if interface == 'diff_drive'
+        else derived_topics(c['controller'], interface)['command_topic'])
     return BaseControllerSpec(
         name=c['name'], controller=c['controller'], joints=list(c['joints']),
         interface=interface, kind=c.get('kind', 'position'),
-        command_topic=topic)
+        command_topic=topic, wheel_radius=_opt_float(c.get('wheel_radius')),
+        wheel_separation=_opt_float(c.get('wheel_separation')))
 
 
 def parse(data: Mapping[str, Any], prefix: str | None = None,
@@ -230,7 +237,8 @@ def _parse(data, prefix, args, path) -> RobotDescriptor:
             command_topic=mb['command_topic'], odom_topic=mb['odom_topic'],
             **{k: bool(mb.get(k, False)) for k in
                ('has_vel_x', 'has_vel_y', 'has_vel_z', 'has_vel_theta')},
-            controllers=[_base_controller(c) for c in mb.get('controllers') or []])
+            controllers=[_base_controller(c, mb['command_topic'])
+                         for c in mb.get('controllers') or []])
 
     ee = []
     for e in data.get('ee') or []:

@@ -121,9 +121,11 @@ struct BaseControllerSpec
   std::string name;
   std::string controller;
   std::vector<std::string> joints;
-  std::string interface = "group";
+  std::string interface = "group";  // "group" | "trajectory" | "diff_drive"
   std::string kind = "position";
   std::string command_topic;
+  double wheel_radius = 0.0;  // m; 0 when absent (diff_drive requires it)
+  double wheel_separation = 0.0;
 };
 
 struct MobileBaseSpec
@@ -284,6 +286,12 @@ inline std::string str(const YAML::Node & n, const std::string & key, const std:
 {
   const YAML::Node v = n[key];
   return (v && !v.IsNull()) ? v.as<std::string>() : dflt;
+}
+
+inline double num(const YAML::Node & n, const std::string & key, double dflt = 0.0)
+{
+  const YAML::Node v = n[key];
+  return (v && !v.IsNull()) ? v.as<double>() : dflt;
 }
 
 inline std::vector<std::string> strs(const YAML::Node & n, const std::string & key)
@@ -463,8 +471,12 @@ inline RobotDescriptor load_file(
         s.joints = req(c, "joints", path).as<std::vector<std::string>>();
         s.interface = str(c, "interface", "group");
         s.kind = str(c, "kind", "position");
+        // diff_drive consumes the base twist, so it defaults to mobile_base.command_topic.
         s.command_topic = str(c, "command_topic",
+            s.interface == "diff_drive" ? m.command_topic :
             s.controller + (s.interface == "group" ? "/commands" : "/joint_trajectory"));
+        s.wheel_radius = num(c, "wheel_radius");
+        s.wheel_separation = num(c, "wheel_separation");
         m.controllers.push_back(std::move(s));
       }
       r.mobile_base = std::move(m);
