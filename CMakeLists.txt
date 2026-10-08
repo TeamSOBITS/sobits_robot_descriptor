@@ -16,6 +16,8 @@ target_link_libraries(${PROJECT_NAME} INTERFACE yaml-cpp::yaml-cpp)
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME} EXPORT export_${PROJECT_NAME})
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+install(PROGRAMS scripts/validate scripts/new_robot DESTINATION lib/${PROJECT_NAME})
 
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)

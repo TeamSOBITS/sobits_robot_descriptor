@@ -1,0 +1,92 @@
+# Robot descriptor (schema v2) template. Create one with
+#   ros2 run sobits_robot_descriptor new_robot --robot-id <id>
+# then replace every <...> placeholder and delete what the robot lacks.
+# Topics are relative to `namespace`; frames are bare URDF link names.
+schema_version: 2
+robot_id: <robot_id>
+version: "1.0.0"
+namespace: <namespace>
+description_package: <description_package>
+
+urdf:
+  xacro: robots/<robot_xacro>.urdf.xacro    # relative to the description share dir
+  urdf: robots/<robot_urdf>.urdf             # optional pre-rendered URDF
+  args:
+    <xacro_arg>: <default_value>            # defaults used to evaluate `requires`
+
+base_frame: <base_link>
+odom_frame: <odom_frame>
+joint_states_topic: joint_states
+
+groups:
+  # interface: trajectory (JointTrajectoryController) | group (forward command controller)
+  # kind: position | velocity. Topics default to <controller>/joint_trajectory,
+  # <controller>/follow_joint_trajectory, <controller>/controller_state (group: <controller>/commands).
+  - name: <group_name>
+    controller: <group_controller>
+    interface: trajectory
+    kind: position
+    joints: [<joint_1>, <joint_2>]
+    uncommanded_joints: [<mimic_joint>]     # published in joint_states, never commanded
+    # command_topic: <override_command_topic>
+    # command_action: <override_command_action>
+    # state_topic: <override_state_topic>
+
+mobile_base:
+  command_topic: cmd_vel
+  odom_topic: odom
+  has_vel_x: true
+  has_vel_y: false
+  has_vel_z: false
+  has_vel_theta: true
+  controllers:                              # wheel joints: auto-excluded from datasets
+    - name: <base_controller_name>
+      controller: <base_controller>
+      interface: group
+      kind: velocity
+      joints: [<wheel_joint_1>, <wheel_joint_2>]
+
+sensors:
+  cameras:
+    - name: <camera_name>
+      frame: <camera_mount_link>
+      model: <camera_model>
+      color:
+        frame: <color_optical_frame>
+        raw_topic: <camera_name>/color/image_raw
+        compressed_topic: <camera_name>/color/image_raw/compressed
+        info_topic: <camera_name>/color/camera_info
+        encoding: rgb8
+        width: 640
+        height: 480
+        fps: 30
+      depth:
+        frame: <depth_optical_frame>
+        raw_topic: <camera_name>/depth/image_raw
+        compressed_topic: <camera_name>/depth/image_raw/compressedDepth
+        info_topic: <camera_name>/depth/camera_info
+        points_topic: <camera_name>/depth/points
+        encoding: 16UC1
+        range_m: [0.1, 10.0]
+      requires: {<xacro_arg>: <value>}      # optional: entry exists only for this variant
+  lidars:
+    - name: <lidar_name>
+      frame: <lidar_frame>
+      scan_topic: <lidar_name>/scan
+      points_topic: <lidar_name>/scan/points
+      # merged_from: [<lidar_a>, <lidar_b>]
+  imus:
+    - name: <imu_name>
+      frame: <imu_frame>
+      topic: <imu_topic>
+
+ee:
+  - name: <ee_name>
+    ee_link: <ee_link>
+    reference_frame: <ee_reference_frame>
+    control:                                # optional: servo/teleop contract
+      group: <group_name>
+      command_frame: <ee_target_frame>
+      enable_topic: <group_name>/moveit_track_enabled
+
+excluded_joints: []                         # extra joints to drop from joint_states consumers
