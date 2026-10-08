@@ -1,0 +1,12 @@
+# Smallest valid descriptor: one group, no base, no sensors.
+schema_version: 2
+robot_id: minimal
+namespace: ""
+urdf:
+  xacro: urdf/minimal.urdf.xacro
+base_frame: base_link
+joint_states_topic: joint_states
+groups:
+  - name: arm
+    controller: arm_controller
+    joints: [joint_1, joint_2]

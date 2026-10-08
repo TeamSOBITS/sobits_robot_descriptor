@@ -19,6 +19,23 @@ install(TARGETS ${PROJECT_NAME} EXPORT export_${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 install(PROGRAMS scripts/validate scripts/new_robot DESTINATION lib/${PROJECT_NAME})
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_pytest_test(test_python test TIMEOUT 120
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  ament_add_gtest(test_loader test/test_loader.cpp)
+  target_link_libraries(test_loader ${PROJECT_NAME})
+  target_compile_definitions(test_loader PRIVATE
+    TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data")
+
+  option(SOBITS_ROBOT_DESCRIPTOR_LINT "Run ament_lint_auto linters" OFF)
+  if(SOBITS_ROBOT_DESCRIPTOR_LINT)
+    find_package(ament_lint_auto REQUIRED)
+    ament_lint_auto_find_test_dependencies()
+  endif()
+endif()
+
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(yaml-cpp)
