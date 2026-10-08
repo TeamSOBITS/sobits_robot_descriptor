@@ -1,3 +1,5 @@
+[English](README.md) | [日本語](README_ja.md)
+
 # sobits_robot_descriptor
 
 One hand-written `<robot>.robot.yaml` per robot, owned by the robot's description
