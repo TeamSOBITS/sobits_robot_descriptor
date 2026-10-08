@@ -33,6 +33,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <map>
@@ -261,13 +262,12 @@ struct RobotDescriptor
 namespace detail
 {
 
-inline std::string norm(const YAML::Node & n)
+inline std::string norm(std::string s)
 {
-  // Match python: YAML booleans compare as "true"/"false".
-  std::string s = n.as<std::string>();
-  static const std::vector<std::string> t{"true", "True", "TRUE"}, f{"false", "False", "FALSE"};
-  if (std::find(t.begin(), t.end(), s) != t.end()) {return "true";}
-  if (std::find(f.begin(), f.end(), s) != f.end()) {return "false";}
+  // Match python: lower-case; true/yes/on and false/no/off compare as "true"/"false".
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {return std::tolower(c);});
+  if (s == "true" || s == "yes" || s == "on") {return "true";}
+  if (s == "false" || s == "no" || s == "off") {return "false";}
   return s;
 }
 
@@ -302,7 +302,7 @@ inline Args args_of(const YAML::Node & n)
 {
   Args out;
   if (n && n.IsMap()) {
-    for (const auto & kv : n) {out[kv.first.as<std::string>()] = norm(kv.second);}
+    for (const auto & kv : n) {out[kv.first.as<std::string>()] = kv.second.as<std::string>();}
   }
   return out;
 }
@@ -311,7 +311,7 @@ inline bool present(const Args & req, const Args & eff)
 {
   for (const auto & [k, v] : req) {
     auto it = eff.find(k);
-    if (it == eff.end() || it->second != v) {return false;}
+    if (it == eff.end() || detail::norm(it->second) != detail::norm(v)) {return false;}
   }
   return true;
 }

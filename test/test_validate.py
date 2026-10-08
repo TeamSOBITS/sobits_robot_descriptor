@@ -150,6 +150,13 @@ def test_validate_cli():
     assert run_cli('scripts/validate', 'no_such_robot').returncode == 2
 
 
+def test_validate_cli_requires_case_insensitive():
+    on = run_cli('scripts/validate', 'test/data/sobit_home.robot.yaml',
+                 '--args', 'head_cam_type=ORBBEC')
+    assert on.returncode == 0, on.stdout + on.stderr
+    assert "imus: ['head_camera_imu']" in on.stdout
+
+
 def test_new_robot_cli(tmp_path):
     r = run_cli('scripts/new_robot', '--robot-id', 'my_robot', '--namespace', '',
                 '-o', str(tmp_path / 'new_dir'))

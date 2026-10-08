@@ -32,7 +32,7 @@ optional frame prefix (`frame()`).
 | stream (`color`/`depth`) | `{frame, raw_topic, compressed_topic?, info_topic, encoding?, width?, height?, fps?, points_topic?, range_m?}` | `frame` = optical frame; `range_m: [min, max]` |
 | `sensors.lidars[]` | `{name, frame, scan_topic, points_topic?, merged_from?, requires?}` | `merged_from` names other lidars |
 | `sensors.imus[]` | `{name, frame, topic, requires?}` | |
-| `*.requires` | `{xacro_arg: value}` | sensor entry exists only when every key equals `urdf.args` merged with caller overrides |
+| `*.requires` | `{xacro_arg: value}` | sensor entry exists only when every key equals `urdf.args` merged with caller overrides (case-insensitive; `true/yes/on` and `false/no/off` compare as booleans) |
 | `ee[]` | `{name, ee_link, reference_frame, control?}` | `control {group, command_frame, enable_topic}`, `group` must be a group name |
 | `excluded_joints[]` | joint names | explicit extras; `all_excluded_joints` adds every `mobile_base.controllers[].joints` |
 

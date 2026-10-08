@@ -45,11 +45,21 @@ from .schema import (
 ENV_PATH = 'SOBITS_ROBOT_DESCRIPTOR_PATH'
 
 
+_TRUE = {'true', 'yes', 'on'}
+_FALSE = {'false', 'no', 'off'}
+
+
+def _str(value: Any) -> str:
+    """Arg value as given; YAML booleans become 'true'/'false'."""
+    return ('true' if value else 'false') if isinstance(value, bool) else str(value)
+
+
 def _norm(value: Any) -> str:
-    """Compare xacro args as strings; YAML booleans become 'true'/'false'."""
+    """Compare xacro args as lower-case strings; booleans and yes/no/on/off -> 'true'/'false'."""
     if isinstance(value, bool):
         return 'true' if value else 'false'
-    return str(value)
+    s = str(value).strip().lower()
+    return 'true' if s in _TRUE else 'false' if s in _FALSE else s
 
 
 def _probe_dir(directory: Path, robot_id: str) -> list[Path]:
@@ -133,11 +143,12 @@ def read_yaml(path: str | os.PathLike) -> dict[str, Any]:
 
 
 def _requires(entry: Mapping[str, Any]) -> dict[str, str]:
-    return {str(k): _norm(v) for k, v in (entry.get('requires') or {}).items()}
+    return {str(k): _str(v) for k, v in (entry.get('requires') or {}).items()}
 
 
 def _present(entry: Mapping[str, Any], args: Mapping[str, str]) -> bool:
-    return all(args.get(k) == v for k, v in _requires(entry).items())
+    return all(k in args and _norm(args[k]) == _norm(v)
+               for k, v in _requires(entry).items())
 
 
 def _stream(kind: str, d: Mapping[str, Any] | None) -> StreamSpec | None:
@@ -191,8 +202,8 @@ def parse(data: Mapping[str, Any], prefix: str | None = None,
 
 def _parse(data, prefix, args, path) -> RobotDescriptor:
     u = data['urdf']
-    urdf_args = {str(k): _norm(v) for k, v in (u.get('args') or {}).items()}
-    eff = {**urdf_args, **{str(k): _norm(v) for k, v in (args or {}).items()}}
+    urdf_args = {str(k): _str(v) for k, v in (u.get('args') or {}).items()}
+    eff = {**urdf_args, **{str(k): _str(v) for k, v in (args or {}).items()}}
     sensors = data.get('sensors') or {}
 
     cameras = [

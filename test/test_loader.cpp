@@ -93,6 +93,14 @@ TEST(Loader, RequiresFiltering)
   EXPECT_THROW(rs.imu("head_camera_imu"), std::runtime_error);
 }
 
+TEST(Loader, RequiresCaseInsensitive)
+{
+  const auto up = srd::load_file(SOBIT_HOME, "", {{"head_cam_type", "ORBBEC"}});
+  EXPECT_EQ(up.imus.size(), 1u);
+  EXPECT_EQ(up.args.at("head_cam_type"), "ORBBEC");
+  EXPECT_TRUE(srd::load_file(SOBIT_HOME, "", {{"head_cam_type", "Realsense"}}).imus.empty());
+}
+
 TEST(Loader, UnknownNameListsKnown)
 {
   const auto d = srd::load_file(SOBIT_HOME);

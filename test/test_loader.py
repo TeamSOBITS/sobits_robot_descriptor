@@ -32,6 +32,7 @@ import pytest
 import yaml
 from conftest import DATA, ROOT
 
+from sobits_robot_descriptor.loader import parse
 from sobits_robot_descriptor import (
     DescriptorError, SCHEMA_VERSION, load, load_file, resolve_path,
 )
@@ -97,6 +98,23 @@ def test_requires_orbbec_vs_realsense(sobit_home_path):
     assert [c.name for c in realsense.cameras] == [c.name for c in orbbec.cameras]
     with pytest.raises(DescriptorError, match="Unknown imu 'head_camera_imu'"):
         realsense.imu('head_camera_imu')
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('ORBBEC', 1), ('Orbbec', 1), ('realsense', 0), ('Realsense', 0)])
+def test_requires_case_insensitive(sobit_home_path, value, expected):
+    d = load_file(sobit_home_path, args={'head_cam_type': value})
+    assert len(d.imus) == expected
+    assert d.args['head_cam_type'] == value
+
+
+def test_requires_bool_forms(tmp_path):
+    data = yaml.safe_load(open(DATA / 'sobit_home.robot.yaml'))
+    data['sensors']['imus'][0]['requires'] = {'enable_head': 'True'}
+    data['urdf'].setdefault('args', {})['enable_head'] = 'true'
+    for override, expected in [('True', 1), ('true', 1), (True, 1), ('false', 0),
+                               ('False', 0), (False, 0), ('off', 0), ('yes', 1)]:
+        assert len(parse(data, args={'enable_head': override}).imus) == expected, override
 
 
 def test_derived_topics(desc):
