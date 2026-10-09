@@ -46,3 +46,8 @@ def clean_env(monkeypatch):
 @pytest.fixture
 def sobit_home_path():
     return DATA / 'sobit_home.robot.yaml'
+
+
+@pytest.fixture
+def requires_path():
+    return DATA / 'requires.robot.yaml'

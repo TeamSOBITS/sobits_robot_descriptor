@@ -1,4 +1,3 @@
-# Copy of sobit_home_description/config/sobit_home.robot.yaml for loader tests.
 schema_version: 2
 robot_id: sobit_home
 version: "2.0.0"
@@ -139,12 +138,6 @@ sensors:
       scan_topic: lidar_scan
       points_topic: lidar_scan/points
       merged_from: [lidar_front, lidar_back]
-
-  imus:
-    - name: head_camera_imu
-      frame: head_camera_IMU_frame
-      topic: head_camera/gyro_accel/sample
-      requires: {head_cam_type: orbbec}
 
 ee:
   - name: left

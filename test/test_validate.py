@@ -42,6 +42,11 @@ def base():
     return yaml.safe_load((DATA / 'sobit_home.robot.yaml').read_text())
 
 
+@pytest.fixture(scope='module')
+def req():
+    return yaml.safe_load((DATA / 'requires.robot.yaml').read_text())
+
+
 def errors_of(data):
     return check(data)[0]
 
@@ -95,11 +100,11 @@ def test_missing_stream_frame(base):
     assert errs == ["camera 'hand_left_camera': needs a color or depth stream"]
 
 
-def test_other_rules(base):
+def test_other_rules(base, req):
     assert any('duplicate group/base controller name' in e for e in
                mutated(base, lambda d: d['groups'][1].update(name='head')))
     assert any('duplicate sensor name' in e for e in mutated(
-        base, lambda d: d['sensors']['imus'][0].update(name='lidar_front')))
+        req, lambda d: d['sensors']['imus'].append(copy.deepcopy(d['sensors']['imus'][0]))))
     assert any('interface must be one of' in e for e in
                mutated(base, lambda d: d['groups'][0].update(interface='traj')))
     assert any('kind must be one of' in e for e in mutated(
@@ -115,8 +120,9 @@ def test_other_rules(base):
                          for k in ('raw_topic', 'compressed_topic')]))
 
 
-def test_warnings(base):
+def test_warnings(base, req):
     d = copy.deepcopy(base)
+    d['sensors']['imus'] = copy.deepcopy(req['sensors']['imus'])
     d['sensors']['imus'][0]['requires'] = {'imu_type': 'x'}
     d['excluded_joints'] = ['wheel_steer_f_l_joint']
     d['groups'][0]['max_joint_delta'] = 0.1
@@ -141,7 +147,7 @@ def run_cli(*args):
 
 
 def test_validate_cli():
-    ok = run_cli('scripts/validate', 'test/data/sobit_home.robot.yaml',
+    ok = run_cli('scripts/validate', 'test/data/requires.robot.yaml',
                  '--args', 'head_cam_type=realsense')
     assert ok.returncode == 0, ok.stdout + ok.stderr
     assert "imus: []" in ok.stdout
@@ -151,10 +157,10 @@ def test_validate_cli():
 
 
 def test_validate_cli_requires_case_insensitive():
-    on = run_cli('scripts/validate', 'test/data/sobit_home.robot.yaml',
+    on = run_cli('scripts/validate', 'test/data/requires.robot.yaml',
                  '--args', 'head_cam_type=ORBBEC')
     assert on.returncode == 0, on.stdout + on.stderr
-    assert "imus: ['head_camera_imu']" in on.stdout
+    assert "imus: ['head_imu']" in on.stdout
 
 
 def test_new_robot_cli(tmp_path):

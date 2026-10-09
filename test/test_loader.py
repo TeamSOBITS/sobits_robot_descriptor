@@ -88,33 +88,36 @@ def test_resolve_search_dirs_and_error(clean_env, tmp_path):
     assert str(tmp_path / 'no_such_robot.robot.yaml') in str(e.value)
 
 
-def test_requires_orbbec_vs_realsense(sobit_home_path):
-    orbbec = load_file(sobit_home_path)
+def test_requires_orbbec_vs_realsense(requires_path):
+    orbbec = load_file(requires_path)
     assert orbbec.args == {'head_cam_type': 'orbbec'}
-    assert [i.name for i in orbbec.imus] == ['head_camera_imu']
-    assert orbbec.imu('head_camera_imu').topic == 'head_camera/gyro_accel/sample'
-    realsense = load_file(sobit_home_path, args={'head_cam_type': 'realsense'})
+    assert [i.name for i in orbbec.imus] == ['head_imu']
+    assert orbbec.imu('head_imu').topic == 'head_imu/sample'
+    realsense = load_file(requires_path, args={'head_cam_type': 'realsense'})
     assert realsense.imus == []
-    assert [c.name for c in realsense.cameras] == [c.name for c in orbbec.cameras]
-    with pytest.raises(DescriptorError, match="Unknown imu 'head_camera_imu'"):
-        realsense.imu('head_camera_imu')
+    with pytest.raises(DescriptorError, match="Unknown imu 'head_imu'"):
+        realsense.imu('head_imu')
 
 
 @pytest.mark.parametrize('value, expected', [
     ('ORBBEC', 1), ('Orbbec', 1), ('realsense', 0), ('Realsense', 0)])
-def test_requires_case_insensitive(sobit_home_path, value, expected):
-    d = load_file(sobit_home_path, args={'head_cam_type': value})
+def test_requires_case_insensitive(requires_path, value, expected):
+    d = load_file(requires_path, args={'head_cam_type': value})
     assert len(d.imus) == expected
     assert d.args['head_cam_type'] == value
 
 
-def test_requires_bool_forms(tmp_path):
-    data = yaml.safe_load(open(DATA / 'sobit_home.robot.yaml'))
+def test_requires_bool_forms():
+    data = yaml.safe_load(open(DATA / 'requires.robot.yaml'))
     data['sensors']['imus'][0]['requires'] = {'enable_head': 'True'}
     data['urdf'].setdefault('args', {})['enable_head'] = 'true'
     for override, expected in [('True', 1), ('true', 1), (True, 1), ('false', 0),
                                ('False', 0), (False, 0), ('off', 0), ('yes', 1)]:
         assert len(parse(data, args={'enable_head': override}).imus) == expected, override
+
+
+def test_sobit_home_has_no_imu(desc):
+    assert desc.imus == []
 
 
 def test_derived_topics(desc):

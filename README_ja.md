@@ -86,7 +86,7 @@ desc.topic(desc.cameras[0].color.raw_topic)    # '/sobit_home/head_camera/color/
 desc.frame(desc.base_frame)                    # prefix + 'base_footprint'
 desc.group('arm_left').joints
 desc.camera('head_camera').streams()           # [color, depth]
-desc.lidar('lidar_merged'), desc.imu('head_camera_imu'), desc.end_effector('left')
+desc.lidar('lidar_front'), desc.end_effector('left')
 desc.joints(include_uncommanded=False)
 desc.all_excluded_joints                       # excluded_joints + wheel joints
 desc.controllers()                             # groups + mobile base controllers

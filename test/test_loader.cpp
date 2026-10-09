@@ -37,6 +37,7 @@ namespace srd = sobits_robot_descriptor;
 
 static const std::string DATA = TEST_DATA_DIR;
 static const std::string SOBIT_HOME = DATA + "/sobit_home.robot.yaml";
+static const std::string REQUIRES = DATA + "/requires.robot.yaml";
 
 TEST(Loader, ParsesSobitHome)
 {
@@ -106,19 +107,18 @@ TEST(Loader, TopicAndFramePrefix)
 
 TEST(Loader, RequiresFiltering)
 {
-  EXPECT_EQ(srd::load_file(SOBIT_HOME).imus.size(), 1u);
-  const auto rs = srd::load_file(SOBIT_HOME, "", {{"head_cam_type", "realsense"}});
+  EXPECT_EQ(srd::load_file(REQUIRES).imus.size(), 1u);
+  const auto rs = srd::load_file(REQUIRES, "", {{"head_cam_type", "realsense"}});
   EXPECT_TRUE(rs.imus.empty());
-  EXPECT_EQ(rs.cameras.size(), 3u);
-  EXPECT_THROW(rs.imu("head_camera_imu"), std::runtime_error);
+  EXPECT_THROW(rs.imu("head_imu"), std::runtime_error);
 }
 
 TEST(Loader, RequiresCaseInsensitive)
 {
-  const auto up = srd::load_file(SOBIT_HOME, "", {{"head_cam_type", "ORBBEC"}});
+  const auto up = srd::load_file(REQUIRES, "", {{"head_cam_type", "ORBBEC"}});
   EXPECT_EQ(up.imus.size(), 1u);
   EXPECT_EQ(up.args.at("head_cam_type"), "ORBBEC");
-  EXPECT_TRUE(srd::load_file(SOBIT_HOME, "", {{"head_cam_type", "Realsense"}}).imus.empty());
+  EXPECT_TRUE(srd::load_file(REQUIRES, "", {{"head_cam_type", "Realsense"}}).imus.empty());
 }
 
 TEST(Loader, UnknownNameListsKnown)

@@ -1,0 +1,20 @@
+# Minimal robot with one conditional imu, covers the `requires` mechanism.
+schema_version: 2
+robot_id: requires_demo
+namespace: ""
+urdf:
+  xacro: urdf/minimal.urdf.xacro
+  args:
+    head_cam_type: orbbec
+base_frame: base_link
+joint_states_topic: joint_states
+groups:
+  - name: arm
+    controller: arm_controller
+    joints: [joint_1, joint_2]
+sensors:
+  imus:
+    - name: head_imu
+      frame: head_imu_link
+      topic: head_imu/sample
+      requires: {head_cam_type: orbbec}
